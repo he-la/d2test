@@ -41,21 +41,29 @@
 		<div class="content" id="uform">
 			Bevor es los geht brauche ich noch ein paar Angaben von Dir (ansonsten ist der Test übrigens völlig anonym):<br>
 			<div style="margin: 10px 20px;">
-				<form action="javascript:setUDetails();">
-					<span>Geschlecht</span><br>
-					<input name="sex" type="radio" id="male">
-					<label for="male" style="margin-right: 50px;">Männlich</label>
-					<input name="sex" type="radio" id="female">
-					<label for="female">Weiblich</label>
-					<br><br>
-					<input type="checkbox" id="coffee" />
-					<label for="coffee">Ich habe vor kurzem Kaffee getrunken.</label>
-					<br>
-					<input type="checkbox" id="sugar" />
-					<label for="sugar">Ich habe vor kurzem erhöht Zucker gegessen (Kuchen, Apfelsaft, etc.).</label>
+				<form>
+					<div class="row" style="position: relative; top: 10px;">
+						<div class="col s6">
+							<input name="sex" type="radio" id="male">
+							<label for="male" style="margin-right: 50px;">Männlich</label>
+							<input name="sex" type="radio" id="female">
+							<label for="female">Weiblich</label>
+						</div>
+						<div class="input-field col s3" style="position: relative;bottom: 33px;">
+							<input id="age" type="number" class="validate">
+							<label for="age">Alter</label>
+						</div>
+					</div><br>
+					<div style="position: relative; bottom: 70px;">
+						<input type="checkbox" id="coffee" />
+						<label for="coffee">Ich habe vor kurzem Kaffee getrunken.</label>
+						<br>
+						<input type="checkbox" id="sugar" />
+						<label for="sugar">Ich habe vor kurzem erhöht Zucker gegessen (Kuchen, Apfelsaft, etc.).</label>
+					</div>
 				</form>
 			</div><br>
-			<a class="waves-effect waves-light btn floatbr" href="javascript:switchTo('#explanation')">Weiter!</a>
+			<a class="waves-effect waves-light btn floatbr" style="position: relative; bottom: 80px;" href="javascript:setUDetails();">Weiter!</a><!--FIXME-->
 		</div>
 
 		<div class="content" id="explanation">
