@@ -1,0 +1,114 @@
+html,body {
+	margin: 0;
+	padding: 0;
+}
+
+#notifier {
+	position: fixed;
+	top: 40%;
+	left: 38%;
+	color: red;
+	visibility: hidden;
+}
+
+.content {
+	height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	position: absolute;
+	opacity: 0;
+	transition: opacity .2s ease-in-out;
+}
+
+.content.active {
+	height: auto;
+	position: static;
+	visibility: visible;
+	opacity: 1;
+}
+
+#container {
+	margin-top: 20vh;
+	height: 100%;
+	width: 700px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 20px !important;
+}
+
+.floatbr {
+	float: right;
+}
+
+canvas {
+	margin: 30px 20px;
+	-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;
+}
+
+.biglink {
+	cursor: pointer;
+	-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;
+	padding: 20px 5px;
+}
+
+#credits {
+	opacity: .7;
+	position: fixed;
+	bottom: 10px;
+	right: 15px;
+	font-size: 12px;
+}
+
+#test_splash {
+	opacity: 0.7;
+	width: 400px;
+	margin: 50px auto;
+	transition: opacity .2s ease-in-out;
+	text-align: center;
+}
+
+#timerbar {
+	margin: 0;
+	padding: 0;
+	position: fixed;
+	top: 0;
+	left: 0;
+	-moz-transform: scale(-1, 1);
+	-webkit-transform: scale(-1, 1);
+	-o-transform: scale(-1, 1);
+	-ms-transform: scale(-1, 1);
+	transform: scale(-1, 1);
+}
+
+.determinate {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	transition: none !important;
+}
+
+.determinate.doTransition {
+	transition: width ${TIME}s linear !important;
+	width: 0;
+}
+
+#totalprogress {
+	position: fixed;
+	bottom: 17px;
+	left: 20px;
+	opacity: 0.5;
+}
+
+#rowprogress {
+	position: fixed;
+	top: 17px;
+	left: 20px;
+	opacity: 0.5;
+}
+
+#timeleft {
+	position: fixed;
+	top: 17px;
+	right: 20px;
+	opacity: 0.5;
+}

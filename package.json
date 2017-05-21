@@ -1,0 +1,16 @@
+{
+  "name": "d2test",
+  "version": "1.0.0",
+  "description": "Serves a d2-Test",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1",
+    "start": "node start.js",
+    "deploy": "node deploy.js"
+  },
+  "author": "Henrik Laxhuber",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}
