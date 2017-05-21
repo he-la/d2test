@@ -1,4 +1,10 @@
-//Build script
+/*
+BUILD SCRIPT IMPLEMENTING:
+- universal constant preprocessor (very hacky, needs some work)
+- html, js, and css compression
+- auto-launch express server after build
+*/
+// TODO: Rewrite everything with proper async.
 const fs = require('fs');
 const path = require('path');
 const ncp = require('ncp').ncp;
@@ -81,12 +87,12 @@ require('./app/index.js');
 
 function compress() {
 	console.log("Compressing.");
-	/*compressor.minify({
+	compressor.minify({
 		compressor: 'gcc',
 		input: './temp/main.js',
 		output: './temp/main.gcc.js',
 		callback: function (err, min) {}
-	});*/
+	});
 
 	compressor.minify({
 		compressor: 'uglifyjs',

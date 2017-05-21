@@ -1,15 +1,29 @@
-var position = '',
-time = ${TIME} - 1,
-currentseries = 0,
-block = true,
-tickID,
-index,
-targets,
-row,
-correct;
+/*
+CLIENT-SIDE TEST CODE
 
+This code is written very linearly and has some duplicates.
+If you find some parts are too cryptic or hacky, feel free
+to fix it and make a pull request.
+*/
+// Global variables
+var position = '',	// sitting / standing
+time = ${TIME} - 1,	// series time left
+currentseries = 0,	// current series index
+block,				// block events for test
+tickID,				// ID of test timer
+index,				// index in series
+targets,			// target numbers for series
+row,				// current row values
+correct,			// correct current row values
+consecutives,		// consecutive correct exercises
+ex_canvas,			// exercise canvas
+ex_ctx,				// exercise context
+test_canvas,		// test canvas
+test_ctx;			// test context
+// For testing; quickly switch to frame
 $(document).ready(function() {
 	$('select').material_select();
+	_setup(); // Create event listeners
 	if (location.hash != "") {
 		switchTo(location.hash)
 	}
@@ -17,11 +31,6 @@ $(document).ready(function() {
 
 function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function saveSetup(_pos) {
-	position = _pos;
-	switchTo('#ustart');
 }
 
 function switchTo(divId) {
@@ -35,7 +44,7 @@ function switchTo(divId) {
 		exercise();
 		break;
 		case "#test":
-		nextSeries(true);
+		nextSeries();
 		break;
 		case "#thanks":
 		setTimeout(function() {
@@ -48,7 +57,10 @@ function switchTo(divId) {
 		setTimeout(function() {switchTo("#ustart");}, 5000);
 		break;
 	}
-    //TODO: Activate on release:
+    //TODO: Implement ifdefs in preprocessor
+    //
+    //Sets warning notification when not configured properly
+    //NOTE: Consider activating on release
     /*
     if (position == '') {
     	$('#notifier').css("visibility", "visible");
@@ -56,9 +68,18 @@ function switchTo(divId) {
     }*/
 }
 
-/***
-Generates a set of target numbers for 8 rows
-***/
+// Called by #loadup
+function saveSetup(_pos) {
+	position = _pos;
+	switchTo('#ustart');
+}
+
+// Called by #uform
+function setUDetails() {
+
+}
+
+// Generates a set of target numbers for 8 rows
 function generateTargetNumbers() {
 	var targets;
 	(targets = []).length = 7;
@@ -76,9 +97,8 @@ function generateTargetNumbers() {
     return targets;
 }
 
-/***
-Generates a row from a target number
-***/
+
+// Generates a row from a target number
 function createRow(targetN) {
 	var row = [],
 	correct = [],
@@ -131,9 +151,8 @@ function createRow(targetN) {
     return [row, correct];
 }
 
-/***
-Draws a row on the specified canvas
-***/
+
+// Draws a row on the specified canvas
 function drawRow(ctx, row) {
 	ctx.clearRect(0, 0, 464, 58);
 	ctx.font = "24px Arial";
@@ -173,77 +192,26 @@ function drawRow(ctx, row) {
 	ctx.stroke();
 }
 
+// Draws a static example series to the example canvas
 function example() {
 	var row = [272, 4609, 545, 4369, 4129, 545, 4369, 289, 4369, 16, 545, 272, 16, 528, 4129, 289, 4609, 545];
 	var ctx = $('#canv_example')[0].getContext('2d');
 	drawRow(ctx, row);
 }
 
-var consecutives = 0;
+// Exercise init
 function exercise() {
-	var index = 0;
-	var targets = generateTargetNumbers();
-	var canvas = $('#canv_exercise');
-	var ctx = canvas[0].getContext('2d');
+	index = 0;
+	targets = generateTargetNumbers();
 
-	canvas.mousemove(function(event) {
-		ctx.clearRect(0, 58, 464, 2);
-		ctx.fillStyle = '#ff3399';
-		ctx.fillRect(26 * Math.floor((event.clientX - canvas.offset().left) / 26) - 3, 59, 26, 1);
-		ctx.fillStyle = '#000000';
-        //ctx.fillRect(event.clientX, 59, 26, 1);
-    });
-	canvas.click(function(event) {
-		var i = Math.floor((event.clientX - canvas.offset().left) / 26);
-		if (row[i] >> 12)
-			row[i] = row[i] & 0x0FFF;
-		else
-			row[i] = row[i] | 0xF000;
-		drawRow(ctx, row);
-        //ctx.fillRect(event.clientX, 59, 26, 1);
-    });
-	canvas.mouseleave(function() {
-		ctx.clearRect(0, 58, 464, 2);
-	});
-
-	var row = createRow(targets[index++]);
-	var correct = row[1];
+	row = createRow(targets[index++]);
+	correct = row[1];
 	row = row[0];
-	drawRow(ctx, row);
-
-	$("#ex_next").click(function(event) {
-		var broken = false;
-		ctx.strokeStyle = '#ff3399';
-		for (i = 0; i < row.length; i++) {
-			if ((row[i] >> 12 > true) != correct[i]) {
-				broken = true;
-				ctx.beginPath();
-				ctx.arc(i * 26 + 10.5, 26.5, 15, 0, 2 * Math.PI);
-				ctx.stroke();
-				$('#ex_correct_errors').css("visibility", "visible");
-			}
-		}
-		ctx.strokeStyle = '#000000';
-		if (broken) {
-			consecutives = -1;
-			return true;
-		}
-		$('#ex_correct_errors').css("visibility", "hidden");
-		consecutives += 1;
-		if (consecutives >= 2)
-			switchTo("#test");
-		if (index >= 7) {
-			index = 0;
-			targets = generateTargetNumbers();
-		}
-		row = createRow(targets[index++]);
-		correct = row[1];
-		row = row[0];
-		drawRow(ctx, row);
-	});
+	drawRow(ex_ctx, row);
 }
 
-function nextSeries(init) {
+// The actual test; initialise next series
+function nextSeries() {
     // Welcome to hell!
     // If you are editing this, look, I'm sorry.
     // I did not expect you to come here.
@@ -262,6 +230,7 @@ function nextSeries(init) {
         switchTo("#thanks");
         return;
     }
+    index = 0;
     time = ${TIME} - 1;
     $("#timeleft").html("Verbleibende Zeit für Serie: ${TIME} Sekunden.");
     currentseries += 1;
@@ -292,8 +261,8 @@ function nextSeries(init) {
     						visibility: "hidden"
     					});
     					splash.html("Nächste Serie");
-    					if (init)
-    						test();
+    					targets = generateTargetNumbers();
+    					nextRow(test_ctx);
     					$("#test_actual").css("visibility", "visible");
     					test_determinate.addClass("doTransition");
     					tickID = setTimeout(testTick, 1000);
@@ -304,6 +273,8 @@ function nextSeries(init) {
     }, 1000);
 }
 
+// The actual test; timer. Remember to disable when switching series
+// by calling clearTimeout(tickID);
 function testTick() {
 	if (time) {
 		time -= 1;
@@ -312,69 +283,17 @@ function testTick() {
 	} else {
 		block = true;
 		$("#timeleft").html("Die Zeit ist abgelaufen.");
-		var ctx = $('#canv_test')[0].getContext('2d');
-		ctx.clearRect(0, 0, 464, 60);
-		ctx.fillText("Die Zeit ist abgelaufen.", 5, 34);
+		test_ctx.clearRect(0, 0, 464, 60);
+		test_ctx.fillText("Die Zeit ist abgelaufen.", 5, 34);
 		setTimeout(function() {
-			index = 0;
 			targets = generateTargetNumbers();
-			nextRow(ctx);
+			nextRow(test_ctx);
 			nextSeries();
 		}, 600);
 	}
 }
 
-function test() {
-	var canvas = $('#canv_test');
-	var ctx = canvas[0].getContext('2d');
-
-	canvas.mousemove(function(event) {
-		if (block)
-			return;
-		ctx.clearRect(0, 58, 464, 2);
-		ctx.fillStyle = '#ff3399';
-		ctx.fillRect(26 * Math.floor((event.clientX - canvas.offset().left) / 26) - 3, 59, 26, 1);
-		ctx.fillStyle = '#000000';
-        //ctx.fillRect(event.clientX, 59, 26, 1);
-    });
-	canvas.click(function(event) {
-		if (block)
-			return;
-		var i = Math.floor((event.clientX - canvas.offset().left) / 26);
-		if (row[i] >> 12)
-			row[i] = row[i] & 0x0FFF;
-		else
-			row[i] = row[i] | 0xF000;
-		drawRow(ctx, row);
-        //ctx.fillRect(event.clientX, 59, 26, 1);
-    });
-	canvas.mouseleave(function() {
-		ctx.clearRect(0, 58, 464, 2);
-	});
-
-	$("#test_next").click(function(event) {
-		if (block)
-			return;
-		for (i = 0; i < row.length; i++) {
-			if ((row[i] >> 12 > true) != correct[i]) {
-                // mistake at i
-            }
-        }
-        if (index >= 7) {
-        	index = 0;
-        	targets = generateTargetNumbers();
-        	clearTimeout(tickID);
-        	nextSeries();
-        }
-        nextRow(ctx);
-    });
-
-    // INIT
-    index = 0;
-    targets = generateTargetNumbers();
-    nextRow(ctx);
-}
-
+// Set global vars to new row
 function nextRow(ctx) {
 	row = createRow(targets[index++]);
 	$("#rowprogress").html("Reihe " + index + "/7");
@@ -383,6 +302,118 @@ function nextRow(ctx) {
 	drawRow(ctx, row);
 }
 
+// Sets event listeners
+function _setup() {
+//
+// EXERCISE
+//
+// TODO: Smarter algorithm to determine when done
+	ex_canvas = $('#canv_exercise');
+	ex_ctx = ex_canvas[0].getContext('2d');
+
+	ex_canvas.mousemove(function(event) {
+		ex_ctx.clearRect(0, 58, 464, 2);
+		ex_ctx.fillStyle = '#ff3399';
+		ex_ctx.fillRect(26 * Math.floor((event.clientX - ex_canvas.offset().left) / 26) - 3, 59, 26, 1);
+		ex_ctx.fillStyle = '#000000';
+        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
+    });
+	ex_canvas.click(function(event) {
+		var i = Math.floor((event.clientX - ex_canvas.offset().left) / 26);
+		if (row[i] >> 12)
+			row[i] = row[i] & 0x0FFF;
+		else
+			row[i] = row[i] | 0xF000;
+		drawRow(ex_ctx, row);
+        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
+    });
+	ex_canvas.mouseleave(function() {
+		ex_ctx.clearRect(0, 58, 464, 2);
+	});
+
+
+	$("#ex_next").click(function(event) {
+		var broken = false;
+		ex_ctx.strokeStyle = '#ff3399';
+		for (i = 0; i < row.length; i++) {
+			if ((row[i] >> 12 > true) != correct[i]) {
+				broken = true;
+				ex_ctx.beginPath();
+				ex_ctx.arc(i * 26 + 10.5, 26.5, 15, 0, 2 * Math.PI);
+				ex_ctx.stroke();
+				$('#ex_correct_errors').css("visibility", "visible");
+			}
+		}
+		ex_ctx.strokeStyle = '#000000';
+		if (broken) {
+			consecutives = -1;
+			return true;
+		}
+		$('#ex_correct_errors').css("visibility", "hidden");
+		consecutives += 1;
+		if (consecutives >= 2)
+			switchTo("#test");
+		if (index >= 7) {
+			index = 0;
+			targets = generateTargetNumbers();
+		}
+		row = createRow(targets[index++]);
+		correct = row[1];
+		row = row[0];
+		drawRow(ex_ctx, row);
+	});
+
+
+//
+// TEST
+//
+	test_canvas = $('#canv_test');
+	test_ctx = test_canvas[0].getContext('2d');
+
+	test_canvas.mousemove(function(event) {
+		if (block)
+			return;
+		test_ctx.clearRect(0, 58, 464, 2);
+		test_ctx.fillStyle = '#ff3399';
+		test_ctx.fillRect(26 * Math.floor((event.clientX - test_canvas.offset().left) / 26) - 3, 59, 26, 1);
+		test_ctx.fillStyle = '#000000';
+        //test_ctx.fillRect(event.clientX, 59, 26, 1);
+    });
+	test_canvas.click(function(event) {
+		if (block)
+			return;
+		var i = Math.floor((event.clientX - test_canvas.offset().left) / 26);
+		if (row[i] >> 12)
+			row[i] = row[i] & 0x0FFF;
+		else
+			row[i] = row[i] | 0xF000;
+		drawRow(test_ctx, row);
+        //test_ctx.fillRect(event.clientX, 59, 26, 1);
+    });
+	test_canvas.mouseleave(function() {
+		test_ctx.clearRect(0, 58, 464, 2);
+	});
+
+	$("#test_next").click(function(event) {
+		if (block)
+			return;
+		for (i = 0; i < row.length; i++) {
+			if ((row[i] >> 12 > true) != correct[i]) {
+                // mistake at i
+                // TODO: Evaluate
+            }
+        }
+        if (index >= 7) {
+        	index = 0;
+        	targets = generateTargetNumbers();
+        	clearTimeout(tickID);
+        	nextSeries();
+        }
+        nextRow(test_ctx);
+    });
+}
+
+// TODO: Submit results
 function submit(doneThatBefore) {
 	switchTo("#postthanks");
 }

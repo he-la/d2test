@@ -1,3 +1,6 @@
+/*
+Client style sheet. Expands on the styles provided by materialize.
+*/
 html,body {
 	margin: 0;
 	padding: 0;
@@ -41,7 +44,7 @@ html,body {
 }
 
 canvas {
-	margin: 30px 20px;
+	margin: 15px 20px;
 	-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;
 }
 
@@ -111,4 +114,8 @@ canvas {
 	top: 17px;
 	right: 20px;
 	opacity: 0.5;
+}
+
+label {
+	color: black !important;
 }

@@ -18,7 +18,7 @@
 		<h1 id="title">d2-Test</h1>
 
 		<div class="content active" id="loadup">
-		Admin Config:<br>
+			Admin Config:<br>
 			<div class="collection">
 				<a href="javascript:saveSetup('standing')" class="collection-item">Standing</a>
 				<a href="javascript:saveSetup('sitting')" class="collection-item">Sitting</a>
@@ -35,14 +35,34 @@
 					<li class="collection-item">2. Wenn du am Computer normalerweise eine Brille trägst, setze sie bitte auf. Falls du sie nicht dabei hast, melde dich bei mir. Ansonsten kann es los gehen!</li>
 				</ul>
 			</div>
-			<a class="waves-effect waves-light btn floatbr" href="javascript:switchTo('#explanation')">Auf geht's!</a>
+			<a class="waves-effect waves-light btn floatbr" href="javascript:switchTo('#uform')">Auf geht's!</a>
+		</div>
+
+		<div class="content" id="uform">
+			Bevor es los geht brauche ich noch ein paar Angaben von Dir (ansonsten ist der Test übrigens völlig anonym):<br>
+			<div style="margin: 10px 20px;">
+				<form action="javascript:setUDetails();">
+					<span>Geschlecht</span><br>
+					<input name="sex" type="radio" id="male">
+					<label for="male" style="margin-right: 50px;">Männlich</label>
+					<input name="sex" type="radio" id="female">
+					<label for="female">Weiblich</label>
+					<br><br>
+					<input type="checkbox" id="coffee" />
+					<label for="coffee">Ich habe vor kurzem Kaffee getrunken.</label>
+					<br>
+					<input type="checkbox" id="sugar" />
+					<label for="sugar">Ich habe vor kurzem erhöht Zucker gegessen (Kuchen, Apfelsaft, etc.).</label>
+				</form>
+			</div><br>
+			<a class="waves-effect waves-light btn floatbr" href="javascript:switchTo('#explanation')">Weiter!</a>
 		</div>
 
 		<div class="content" id="explanation">
-			Beim d2-Test geht es darum, deine Konzentration anhand von Schnelligkeit und Genauigkeit zu messen. Du wirst jeweils eine Reihe aus 18 Buchstaben sehen. Streiche durch Klicken nur jedes 'd' durch, welches insgesamt <b>exakt</b> zwei Striche über und unter sich hat. Alle anderen Zeichen darfst du nicht durchstreichen. Hier ein Beispiel:<br><br>
+			Beim d2-Test geht es darum, deine Konzentration anhand von Schnelligkeit und Genauigkeit zu messen. Du wirst jeweils eine Reihe aus 18 Buchstaben sehen. Streiche durch Klicken nur jedes 'd' durch, welches <b>in der Summe exakt</b> zwei Striche über und unter sich hat. Alle anderen Zeichen darfst du nicht durchstreichen. Hier ein Beispiel - Bilder sagen mehr als tausend Worte:<br><br>
 			<canvas id="canv_example" width="464" height="60">Ein schwerwiegender Fehler ist aufgetreten. Melde dich bei mir.</canvas><br><br>
 			<ul class="collection">
-				<li class="collection-item">1. Für jeweils 7 solcher Reihen hast du ${TIME} Sekunden Zeit.</li>
+				<li class="collection-item">1. Für jeweils 7 solcher Rihen hast du ${TIME} Sekunden Zeit. Du wirst in dieser Zeit kaum fertig werden, also <b>beeile dich und klicke so schnell wie möglich auf "Weiter"</b>!</li>
 				<li class="collection-item">2. Fehler kannst du ganz einfach korrigieren, indem du den Buchstaben noch einmal anklickst.</li>
 				<li class="collection-item">3. Arbeite von links nach rechts.</li>
 			</ul><br>
@@ -52,8 +72,8 @@
 		</div>
 
 		<div class="content" id="exercise">
-			<h5 style="position: relative; top: -12px; margin-bottom: -10px;">Probelauf:</h5>
-			Streiche durch Klicken nur jedes 'd' durch, welches insgesamt exakt zwei Striche über oder unter sich hat.<br>
+			<h5 style="position: relative; top: -12px; margin-bottom: -10px;">Probelauf:</h5>Hinweis: Im Probelauf wird deine Zeit noch nicht gestoppt.<br>
+			Streiche durch Klicken <b>nur</b> jedes 'd' durch, welches <b>in der Summe exakt</b> zwei Striche über und unter sich hat.<br>
 			<canvas unselectable="on" onselectstart="return false;" onmousedown="return false;" id="canv_exercise" width="464" height="60" style="vertical-align:middle">Ein schwerwiegender Fehler ist aufgetreten. Melde dich bei mir.</canvas><a unselectable="on" onselectstart="return false;" onmousedown="return false;" class="biglink" style="margin-left: 20px;" id="ex_next">Weiter</a>
 			<br>
 			<div id="ex_correct_errors" style="visibility: hidden;">
@@ -64,7 +84,7 @@
 						<li class="collection-item">Je einen Strich über und unter sich</li>
 						<li class="collection-item">Zwei Striche unter sich</li>
 					</ul>
-					hat. Wenn du weiterhin Probleme hast, melde dich bei mir.
+					hat. Alle anderen Zeichen darfst du nicht durchstreichen. Wenn du weiterhin Probleme hast, melde dich bei mir.
 				</div>
 			</div>
 		</div>
@@ -73,7 +93,7 @@
 			<h2 id="test_splash">Es geht los!</h2>
 			<div id="test_actual" style="visibility: hidden;">
 				<h5 style="position: relative; top: -12px; margin-bottom: -10px;">Konzentrationstest:</h5>
-				Streiche durch Klicken nur jedes 'd' durch, welches insgesamt exakt zwei Striche über oder unter sich hat.<br>
+				Streiche durch Klicken <b>nur</b> jedes 'd' durch, welches <b>in der Summe exakt</b> zwei Striche über und unter sich hat.<br>
 				<canvas unselectable="on" onselectstart="return false;" onmousedown="return false;" id="canv_test" width="464" height="60" style="vertical-align:middle">Ein schwerwiegender Fehler ist aufgetreten. Melde dich bei mir.</canvas><a unselectable="on" onselectstart="return false;" onmousedown="return false;" class="biglink" id="test_next">Weiter</a>
 				<br>
 				<div style="color:grey;">Zur Erinnerung: Streiche <b>nur</b> jedes <b>d</b> durch, welches entweder<br>
@@ -82,10 +102,10 @@
 						<li class="collection-item">Je einen Strich über und unter sich</li>
 						<li class="collection-item">Zwei Striche unter sich</li>
 					</ul>
-					hat. Für jeweils 7 Reihen hast du ${TIME} Sekunden Zeit.
+					hat. Alle anderen Zeichen darfst du nicht durchstreichen. Für jeweils 7 Reihen hast du ${TIME} Sekunden Zeit - Beeile dich!
 				</div>
 				<div id="timerbar" class="progress">
-				<div class="determinate" id="test_determinate"></div>
+					<div class="determinate" id="test_determinate"></div>
 				</div>
 				<div id="rowprogress">Reihe 1/7</div>
 				<div id="timeleft">Verbleibende Zeit für Serie: ${TIME} Sekunden.</div>
