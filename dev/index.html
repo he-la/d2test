@@ -40,21 +40,21 @@
 
 		<div class="content" id="uform">
 			Bevor es los geht brauche ich noch ein paar Angaben von Dir (ansonsten ist der Test übrigens völlig anonym):<br>
-			<div style="margin: 10px 20px;">
+			<div style="margin: 15px 20px;">
 				<form>
 					<div class="row" style="position: relative; top: 10px;">
 						<div class="col s6">
-							<input name="sex" type="radio" id="male">
+							<input name="sex" type="radio" id="male" required>
 							<label for="male" style="margin-right: 50px;">Männlich</label>
 							<input name="sex" type="radio" id="female">
 							<label for="female">Weiblich</label>
 						</div>
 						<div class="input-field col s3" style="position: relative;bottom: 33px;">
-							<input id="age" type="number" class="validate">
+							<input id="age" type="number" class="validate" required>
 							<label for="age">Alter</label>
 						</div>
 					</div><br>
-					<div style="position: relative; bottom: 70px;">
+					<div style="position: relative; bottom: 65px;">
 						<input type="checkbox" id="coffee" />
 						<label for="coffee">Ich habe vor kurzem Kaffee getrunken.</label>
 						<br>
@@ -62,8 +62,8 @@
 						<label for="sugar">Ich habe vor kurzem erhöht Zucker gegessen (Kuchen, Apfelsaft, etc.).</label>
 					</div>
 				</form>
-			</div><br>
-			<a class="waves-effect waves-light btn floatbr" style="position: relative; bottom: 80px;" href="javascript:setUDetails();">Weiter!</a><!--FIXME-->
+			</div><br><span id="checkdata" style="color: #f44; visibility: hidden; position: relative; bottom: 75px;">Bitte überprüfe deine Angaben.</span>
+			<a class="waves-effect waves-light btn floatbr" style="position: relative; bottom: 80px;" href="javascript:submitUDetails();">Weiter!</a>
 		</div>
 
 		<div class="content" id="explanation">

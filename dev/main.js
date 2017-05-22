@@ -15,11 +15,13 @@ index,				// index in series
 targets,			// target numbers for series
 row,				// current row values
 correct,			// correct current row values
-consecutives,		// consecutive correct exercises
+consecutives = 0,	// consecutive correct exercises
 ex_canvas,			// exercise canvas
 ex_ctx,				// exercise context
 test_canvas,		// test canvas
-test_ctx;			// test context
+test_ctx,			// test context
+udata = {};			// Maps user input data
+
 // For testing; quickly switch to frame
 $(document).ready(function() {
 	$('select').material_select();
@@ -75,8 +77,26 @@ function saveSetup(_pos) {
 }
 
 // Called by #uform
-function setUDetails() {
+function submitUDetails() {
+	if (!_checkUDetails()) {
+		// Faulty data
+		$("#checkdata").css("visibility", "visible");
+		return;
+	}
+	udata.sex = $("input[name=sex]:checked").attr('id') === "male"; // true if male, false if female. This is sexist, I know.
+	udata.age = parseInt($("#age").val());
+	udata.coffee = $("#coffee").val() == true;
+	udata.sugar = $("#sugar").val() == true;
+	switchTo("#explanation");
+}
 
+function _checkUDetails() {
+	if ($("input[name=sex]:checked").attr('id') === undefined)
+		return false;
+	var age = $("#age").val();// As of jQuery 3.0, if no options are selected, it returns an empty array; prior to jQuery 3.0, it returns null.
+	if (age === null || !$.isNumeric(age) || Math.floor(parseInt(age)) != parseInt(age))
+		return false;
+	return true;
 }
 
 // Generates a set of target numbers for 8 rows
