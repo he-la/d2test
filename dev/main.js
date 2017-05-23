@@ -6,7 +6,7 @@ If you find some parts are too cryptic or hacky, feel free
 to fix it and make a pull request.
 */
 // Global variables
-var position = '',	// sitting / standing
+var _POS = '',		// sitting / standing
 time = ${TIME} - 1,	// series time left
 currentseries = 0,	// current series index
 block,				// block events for test
@@ -20,7 +20,8 @@ ex_canvas,			// exercise canvas
 ex_ctx,				// exercise context
 test_canvas,		// test canvas
 test_ctx,			// test context
-udata = {};			// Maps user input data
+data = {results: {}},// Holds json to be submitted on complete
+rowtime;			// holds time when current row started.
 
 // For testing; quickly switch to frame
 $(document).ready(function() {
@@ -39,6 +40,9 @@ function switchTo(divId) {
 	$('.content.active').toggleClass('active');
 	$(divId).toggleClass('active');
 	switch (divId) {
+		case "#uform":
+		$("#uform_form")[0].reset();
+		$("label[for=age]").removeClass("active");
 		case '#explanation':
 		example();
 		break;
@@ -64,15 +68,15 @@ function switchTo(divId) {
     //Sets warning notification when not configured properly
     //NOTE: Consider activating on release
     /*
-    if (position == '') {
+    if (_POS == '') {
     	$('#notifier').css("visibility", "visible");
     	$('#container').css("display", "none");
     }*/
 }
 
 // Called by #loadup
-function saveSetup(_pos) {
-	position = _pos;
+function saveSetup(position) {
+	_POS = position;
 	switchTo('#ustart');
 }
 
@@ -83,10 +87,10 @@ function submitUDetails() {
 		$("#checkdata").css("visibility", "visible");
 		return;
 	}
-	udata.sex = $("input[name=sex]:checked").attr('id') === "male"; // true if male, false if female. This is sexist, I know.
-	udata.age = parseInt($("#age").val());
-	udata.coffee = $("#coffee").val() == true;
-	udata.sugar = $("#sugar").val() == true;
+	data.sex = $("input[name=sex]:checked").attr('id') === "male"; // true if male, false if female. This is sexist, I know.
+	data.age = parseInt($("#age").val());
+	data.coffee = $("#coffee").is(":checked");
+	data.sugar = $("#sugar").is(":checked");
 	switchTo("#explanation");
 }
 
@@ -255,6 +259,7 @@ function nextSeries() {
     $("#timeleft").html("Verbleibende Zeit für Serie: ${TIME} Sekunden.");
     currentseries += 1;
     block = false;
+    data.results[currentseries] = {};
     $("#totalprogress").html("Serie " + currentseries + "/${SERIES}");
     var splash = $("#test_splash");
     var test_determinate = $("#test_determinate");
@@ -302,12 +307,12 @@ function testTick() {
 		tickID = setTimeout(testTick, 1000);
 	} else {
 		block = true;
+		evaluateRow();
 		$("#timeleft").html("Die Zeit ist abgelaufen.");
 		test_ctx.clearRect(0, 0, 464, 60);
 		test_ctx.fillText("Die Zeit ist abgelaufen.", 5, 34);
 		setTimeout(function() {
 			targets = generateTargetNumbers();
-			nextRow(test_ctx);
 			nextSeries();
 		}, 600);
 	}
@@ -320,14 +325,15 @@ function nextRow(ctx) {
 	correct = row[1];
 	row = row[0];
 	drawRow(ctx, row);
+	rowtime = Date.now();
 }
 
 // Sets event listeners
 function _setup() {
-//
-// EXERCISE
-//
-// TODO: Smarter algorithm to determine when done
+	//
+	// EXERCISE
+	//
+	// TODO: Smarter algorithm to determine when done
 	ex_canvas = $('#canv_exercise');
 	ex_ctx = ex_canvas[0].getContext('2d');
 
@@ -336,8 +342,8 @@ function _setup() {
 		ex_ctx.fillStyle = '#ff3399';
 		ex_ctx.fillRect(26 * Math.floor((event.clientX - ex_canvas.offset().left) / 26) - 3, 59, 26, 1);
 		ex_ctx.fillStyle = '#000000';
-        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
-    });
+	        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
+	    });
 	ex_canvas.click(function(event) {
 		var i = Math.floor((event.clientX - ex_canvas.offset().left) / 26);
 		if (row[i] >> 12)
@@ -345,8 +351,8 @@ function _setup() {
 		else
 			row[i] = row[i] | 0xF000;
 		drawRow(ex_ctx, row);
-        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
-    });
+	        //ex_ctx.fillRect(event.clientX, 59, 26, 1);
+	    });
 	ex_canvas.mouseleave(function() {
 		ex_ctx.clearRect(0, 58, 464, 2);
 	});
@@ -384,9 +390,9 @@ function _setup() {
 	});
 
 
-//
-// TEST
-//
+	//
+	// TEST
+	//
 	test_canvas = $('#canv_test');
 	test_ctx = test_canvas[0].getContext('2d');
 
@@ -397,8 +403,8 @@ function _setup() {
 		test_ctx.fillStyle = '#ff3399';
 		test_ctx.fillRect(26 * Math.floor((event.clientX - test_canvas.offset().left) / 26) - 3, 59, 26, 1);
 		test_ctx.fillStyle = '#000000';
-        //test_ctx.fillRect(event.clientX, 59, 26, 1);
-    });
+	        //test_ctx.fillRect(event.clientX, 59, 26, 1);
+	    });
 	test_canvas.click(function(event) {
 		if (block)
 			return;
@@ -408,8 +414,8 @@ function _setup() {
 		else
 			row[i] = row[i] | 0xF000;
 		drawRow(test_ctx, row);
-        //test_ctx.fillRect(event.clientX, 59, 26, 1);
-    });
+	        //test_ctx.fillRect(event.clientX, 59, 26, 1);
+	    });
 	test_canvas.mouseleave(function() {
 		test_ctx.clearRect(0, 58, 464, 2);
 	});
@@ -417,23 +423,98 @@ function _setup() {
 	$("#test_next").click(function(event) {
 		if (block)
 			return;
-		for (i = 0; i < row.length; i++) {
-			if ((row[i] >> 12 > true) != correct[i]) {
-                // mistake at i
-                // TODO: Evaluate
-            }
-        }
-        if (index >= 7) {
-        	index = 0;
-        	targets = generateTargetNumbers();
-        	clearTimeout(tickID);
-        	nextSeries();
-        }
-        nextRow(test_ctx);
-    });
+		evaluateRow();
+		if (index >= 7) {
+			index = 0;
+			targets = generateTargetNumbers();
+			clearTimeout(tickID);
+			nextSeries();
+			return;
+		}
+		nextRow(test_ctx); // here index is set to point to new row
+	});
+}
+
+/*
+How to decode val:
+- marked	= val >> 3*4;
+- ntop 	= (val >> 2*4) & (0x0F);
+- nbot 	= (val >> 1*4) & (0x00F);
+- chr		= val & (0x000F);
+*/
+function evaluateRow() {
+	data.results[currentseries][index - 1] = {time: Date.now() - rowtime};
+ 	var rowres1 = {};
+ 	rowres1.n = 0;
+ 	rowres1.e1 = 0;
+ 	rowres1.e2l = 0;
+ 	rowres1.e2d = 0;
+ 	var rowres2 = rowres1;
+ 	// Ugly duplicates to split in half to fit Brickenkamp normals
+ 	// First half (First 9)
+ 	for (i = 0; i < row.length / 2; i++) {
+ 		var marked = row[i] >> 12 > true;
+ 		if (marked)
+ 			rowres1.n += 1;
+ 		if (marked != correct[i]) {
+			// Evaluate error type
+			if (!marked && correct[i]) {
+				rowres1.e1 += 1;
+			}
+			else {
+				if ((row[i] & 0x000F) == 0)
+					rowres1.e2l += 1;
+				if (((row[i] >> 2*4) & (0x0F) + (row[i] >> 1*4) & (0x00F)) != 2)
+					rowres1.e2d += 1;
+			}
+		}
+	}
+	data.results[currentseries][index - 1][0] = rowres1;
+	// Second half (Second 9)
+	for (i = row.length / 2; i < row.length; i++) {
+ 		var marked = row[i] >> 12 > true;
+ 		if (marked)
+ 			rowres2.n += 1;
+ 		if (marked != correct[i]) {
+			// Evaluate error type
+			if (!marked && correct[i]) {
+				rowres2.e1 += 1;
+			}
+			else {
+				if ((row[i] & 0x000F) == 0)
+					rowres2.e2l += 1;
+				if (((row[i] >> 2*4) & (0x0F) + (row[i] >> 1*4) & (0x00F)) != 2)
+					rowres2.e2d += 1;
+			}
+		}
+	}
+	data.results[currentseries][index - 1][1] = rowres2;
+	data.position = _POS;
 }
 
 // TODO: Submit results
 function submit(doneThatBefore) {
-	switchTo("#postthanks");
+	$('html,body').css('cursor','wait');
+	data.doneThatBefore = doneThatBefore;
+	var _data = JSON.stringify(data);
+	$.ajax({
+		type: "PUT",
+		url: "/:submit",
+		contentType: "application/json",
+		data: _data
+	}).done(function() {
+		console.log(_data);
+		data = {results:{}};
+		time = ${TIME} - 1;
+		consecutives = 0;
+		currentseries = 0;
+		block = false;
+		$('html,body').css('cursor','');
+		switchTo("#postthanks");
+	}).fail(function() {
+		$('html,body').css('cursor','');
+		alert("Ein Fehler ist aufgetreten. Bitte melde dich bei mir.");
+		console.log(_data);
+	});
+
 }

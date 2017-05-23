@@ -19,9 +19,11 @@
   "author": "Henrik Laxhuber",
   "license": "ISC",
   "dependencies": {
-    "cookie-parser": "^1.4.3",
+    "body-parser": "^1.17.2",
     "express": "^4.15.2",
-    "morgan": "^1.8.1"
+    "morgan": "^1.8.1",
+    "sqlite3": "^3.1.8",
+    "type-of-is": "^3.5.1"
   },
   "devDependencies": {
     "html-minifier": "^3.5.0",
