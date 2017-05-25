@@ -7,6 +7,7 @@ to fix it and make a pull request.
 */
 // Global variables
 var _POS = '',		// sitting / standing
+_PC_ID = '',			// computer identifier
 time = ${TIME} - 1,	// series time left
 currentseries = 0,	// current series index
 block,				// block events for test
@@ -16,6 +17,7 @@ targets,			// target numbers for series
 row,				// current row values
 correct,			// correct current row values
 consecutives = 0,	// consecutive correct exercises
+totals = 0,			// Total practice rounds
 ex_canvas,			// exercise canvas
 ex_ctx,				// exercise context
 test_canvas,		// test canvas
@@ -76,6 +78,12 @@ function switchTo(divId) {
 
 // Called by #loadup
 function saveSetup(position) {
+	_PC_ID = $("#PC_ID").val();
+	if (_PC_ID.length <= 2) {
+		$("#loadup_checkinput").css("visibility", "visible");
+		return;
+	}
+	$("#loadup_checkinput").css("visibility", "hidden");
 	_POS = position;
 	switchTo('#ustart');
 }
@@ -87,6 +95,7 @@ function submitUDetails() {
 		$("#checkdata").css("visibility", "visible");
 		return;
 	}
+	$("#checkdata").css("visibility", "hidden");
 	data.sex = $("input[name=sex]:checked").attr('id') === "male"; // true if male, false if female. This is sexist, I know.
 	data.age = parseInt($("#age").val());
 	data.coffee = $("#coffee").is(":checked");
@@ -250,7 +259,6 @@ function nextSeries() {
     if (currentseries >= ${SERIES}) {
         // we are done! Whoohoo!
         clearTimeout(tickID);
-        $("#test_splash").html("Es geht los!");
         switchTo("#thanks");
         return;
     }
@@ -359,11 +367,11 @@ function _setup() {
 
 
 	$("#ex_next").click(function(event) {
-		var broken = false;
+		var broken = 0;
 		ex_ctx.strokeStyle = '#ff3399';
 		for (i = 0; i < row.length; i++) {
 			if ((row[i] >> 12 > true) != correct[i]) {
-				broken = true;
+				broken += 1;
 				ex_ctx.beginPath();
 				ex_ctx.arc(i * 26 + 10.5, 26.5, 15, 0, 2 * Math.PI);
 				ex_ctx.stroke();
@@ -371,8 +379,16 @@ function _setup() {
 			}
 		}
 		ex_ctx.strokeStyle = '#000000';
-		if (broken) {
+		totals += 1;
+		if (totals >= 4 && broken > 1) {
+			// This user needs some help!
+			needHelp("User is having trouble with practice rounds (count: " + totals + ")", false);
+		}
+		if (broken > 1) {
 			consecutives = -1;
+			return true;
+		} else if (broken == 1) {
+			consecutives = 0;
 			return true;
 		}
 		$('#ex_correct_errors').css("visibility", "hidden");
@@ -495,6 +511,7 @@ function evaluateRow() {
 	}
 	data.results[currentseries][index - 1][1] = rowres2;
 	data.position = _POS;
+	data.pc_id = _PC_ID;
 }
 
 // TODO: Submit results
@@ -508,11 +525,12 @@ function submit(doneThatBefore) {
 		contentType: "application/json",
 		data: _data
 	}).done(function() {
-		console.log(_data);
 		data = {results:{}};
 		time = ${TIME} - 1;
 		consecutives = 0;
+		totals = 0;
 		currentseries = 0;
+		$("#test_splash").html("Es geht los!");
 		block = false;
 		$('html,body').css('cursor','');
 		switchTo("#postthanks");
@@ -521,5 +539,23 @@ function submit(doneThatBefore) {
 		alert("Ein Fehler ist aufgetreten. Bitte melde dich bei mir.");
 		console.log(_data);
 	});
+}
 
+function needHelp(details, active) {
+	if (active)
+		$('html,body').css('cursor','wait');
+	$.ajax({
+		type: "POST",
+		url: "/:help",
+		contentType: "application/json",
+		data: JSON.stringify({"pc_id": _PC_ID, "details": details})
+	}).done(function() {
+		$('html,body').css('cursor','');
+	}).fail(function() {
+		$('html,body').css('cursor','');
+		if (active)
+			alert("Ein Fehler ist aufgetreten - melde dich doch direkt bei mir.");
+		else
+			console.log("Error requesting help.");
+	});
 }
