@@ -82,6 +82,13 @@ ncp("./dev", "./app/public", (err) => {
 	}
 });
 
+if (process.argv[2] == "clean") {
+	// Because we love some synchornous code in an asnychrnous deploy script...
+	if (fs.existsSync("./app/data.db"))
+		fs.unlinkSync("./app/data.db");
+}
+else
+	console.log("Note: You can clean the database by passing 'clean' to the deploy script");
 console.log("Loading server...");
 require('./app/index.js');
 

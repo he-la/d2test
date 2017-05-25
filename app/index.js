@@ -14,6 +14,7 @@ var db = new sqlite3.Database(__dirname + '/data.db');
 var stmt;
 db.serialize(() => {
 	db.run(["CREATE TABLE IF NOT EXISTS received (",
+		"DATE TEXT NOT NULL,",
 		"MALE BOOLEAN NOT NULL,",
 		"AGE INTEGER NOT NULL,",
 		"COFFEE BOOLEAN NOT NULL,",
@@ -21,7 +22,7 @@ db.serialize(() => {
 		"EXPERIENCED BOOLEAN NOT NULL,",
 		"SEATED BOOLEAN NOT NULL,",
 		"RESULTS TEXT NOT NULL)"].join('\n')); // hacky multiline string to avoid whitespace issue with backslashes
-	stmt = db.prepare('INSERT INTO received VALUES (?, ?, ?, ?, ?, ?, ?)');
+	stmt = db.prepare('INSERT INTO received VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 });
 
 app.use(morgan('common')); // logger middleware
@@ -44,7 +45,7 @@ app.put('/:submit', (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	stmt.run(req.body.sex, req.body.age, req.body.coffee, req.body.sugar,
+	stmt.run(new Date().toISOString(), req.body.sex, req.body.age, req.body.coffee, req.body.sugar,
 		req.body.doneThatBefore, req.body.position == "sitting", strRestult, (err) => {
 			if (err) {
 				console.error("Error during sqlite write:\n" + error.message);
