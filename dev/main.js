@@ -227,7 +227,6 @@ function example() {
 function exercise() {
 	index = 0;
 	targets = generateTargetNumbers();
-
 	row = createRow(targets[index++]);
 	correct = row[1];
 	row = row[0];
@@ -251,6 +250,7 @@ function nextSeries() {
     if (currentseries >= ${SERIES}) {
         // we are done! Whoohoo!
         clearTimeout(tickID);
+        $("#test_splash").html("Es geht los!");
         switchTo("#thanks");
         return;
     }
