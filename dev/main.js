@@ -443,13 +443,18 @@ How to decode val:
 - chr		= val & (0x000F);
 */
 function evaluateRow() {
+	//FIXME: This code is extremely ugly
 	data.results[currentseries][index - 1] = {time: Date.now() - rowtime};
  	var rowres1 = {};
  	rowres1.n = 0;
  	rowres1.e1 = 0;
  	rowres1.e2l = 0;
  	rowres1.e2d = 0;
- 	var rowres2 = rowres1;
+ 	var rowres2 = {};
+	rowres2.n = 0;
+ 	rowres2.e1 = 0;
+ 	rowres2.e2l = 0;
+ 	rowres2.e2d = 0;
  	// Ugly duplicates to split in half to fit Brickenkamp normals
  	// First half (First 9)
  	for (i = 0; i < row.length / 2; i++) {
@@ -464,7 +469,7 @@ function evaluateRow() {
 			else {
 				if ((row[i] & 0x000F) == 0)
 					rowres1.e2l += 1;
-				if (((row[i] >> 2*4) & (0x0F) + (row[i] >> 1*4) & (0x00F)) != 2)
+				if ((((row[i] >> 2*4) & (0x0F)) + ((row[i] >> 1*4) & (0x00F))) != 2)
 					rowres1.e2d += 1;
 			}
 		}
@@ -483,7 +488,7 @@ function evaluateRow() {
 			else {
 				if ((row[i] & 0x000F) == 0)
 					rowres2.e2l += 1;
-				if (((row[i] >> 2*4) & (0x0F) + (row[i] >> 1*4) & (0x00F)) != 2)
+				if ((((row[i] >> 2*4) & (0x0F)) + ((row[i] >> 1*4) & (0x00F))) != 2)
 					rowres2.e2d += 1;
 			}
 		}
