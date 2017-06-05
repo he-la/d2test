@@ -23,7 +23,8 @@ ex_ctx,				// exercise context
 test_canvas,		// test canvas
 test_ctx,			// test context
 data = {results: {}},// Holds json to be submitted on complete
-rowtime;			// holds time when current row started.
+rowtime,			// holds time when current row started.
+begin = false;		// have we sent a pushBegin?
 
 // For testing; quickly switch to frame
 $(document).ready(function() {
@@ -45,6 +46,7 @@ function switchTo(divId) {
 		case "#uform":
 		$("#uform_form")[0].reset();
 		$("label[for=age]").removeClass("active");
+		pushBegin();
 		case '#explanation':
 		example();
 		break;
@@ -510,18 +512,19 @@ function evaluateRow() {
 		}
 	}
 	data.results[currentseries][index - 1][1] = rowres2;
-	data.position = _POS;
-	data.pc_id = _PC_ID;
 }
 
 // TODO: Submit results
 function submit(doneThatBefore) {
 	$('html,body').css('cursor','wait');
+	pushQuit();
+	data.position = _POS;
+	data.pc_id = _PC_ID;
 	data.doneThatBefore = doneThatBefore;
 	var _data = JSON.stringify(data);
 	$.ajax({
 		type: "PUT",
-		url: "/:submit",
+		url: "/submit",
 		contentType: "application/json",
 		data: _data
 	}).done(function() {
@@ -541,14 +544,15 @@ function submit(doneThatBefore) {
 	});
 }
 
-function needHelp(details, active) {
+function needHelp(details, active, title) {
+	title = typeof title !== 'undefined' ? title : "Help user " + _PC_ID;
 	if (active)
 		$('html,body').css('cursor','wait');
 	$.ajax({
 		type: "POST",
-		url: "/:help",
+		url: "/help",
 		contentType: "application/json",
-		data: JSON.stringify({"pc_id": _PC_ID, "details": details})
+		data: JSON.stringify({"pc_id": _PC_ID, "details": details, "title": title})
 	}).done(function() {
 		$('html,body').css('cursor','');
 	}).fail(function() {
@@ -559,3 +563,31 @@ function needHelp(details, active) {
 			console.log("Error requesting help.");
 	});
 }
+
+function pushBegin() {
+	begin = true;
+	$.ajax({
+		type: "POST",
+		url: "/pushStatus",
+		contentType: "application/json",
+		data: JSON.stringify({"type": "begin", "position": _POS})
+	})
+}
+
+function pushQuit() {
+	needHelp("User is trying to leave page.", false, "User " + _PC_ID + " leaves page!");
+	var msg = "Bitte nicht... sonst werde ich böse!";
+	if (!begin)
+		return msg;
+	begin = false;
+	$.ajax({
+		type: "POST",
+		url: "/pushStatus",
+		contentType: "application/json",
+		data: JSON.stringify({"type": "end", "position": _POS})
+	});
+	return msg;
+}
+
+window.onbeforeunload = pushQuit; // page refresh etc
+$(window).unload(pushQuit); // tab/browser quit (doesn't always work...)

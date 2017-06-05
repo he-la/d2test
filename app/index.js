@@ -24,9 +24,12 @@ db.serialize(() => {
 		"SUGAR BOOLEAN NOT NULL,",
 		"EXPERIENCED BOOLEAN NOT NULL,",
 		"SEATED BOOLEAN NOT NULL,",
-		"RESULTS TEXT NOT NULL)"].join('\n')); // hacky multiline string to avoid whitespace issue with backslashes
+		"RESULTS TEXT NOT NULL)"].join('')); // hacky multiline string to avoid whitespace issue with backslashes
 	stmt = db.prepare('INSERT INTO received VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
 });
+
+var usersInProgress = {"sitting": 0, "standing": 0};
+const re = /\(|\)|;|'|_|%|[A-Z]/g; // sqlite sanitize regex
 
 var pushapidata = JSON.parse(fs.readFileSync('./app/pushbullet.json'), 'utf8');
 /*
@@ -48,13 +51,12 @@ const pusher = new PushBullet(pushapidata.token);
 });*/
 
 app.use(morgan('common')); // logger middleware
-app.use(bodyParser.json());// parse json for submit
+app.use(bodyParser.json());// parse json of xhr requests
 
 app.use(express.static(path.join(__dirname, 'public')));//serve static content
 
-app.put('/:submit', (req, res) => {
+app.put('/submit', (req, res) => {
 	// Prevent injection
-	var re = /\(|\)|;|'|_|%|[A-Z]/g;
 	var strRestult = JSON.stringify(req.body.results);
 	if (!(Type.is(req.body.pc_id, "String") && Type.is(req.body.sex, "Boolean") &&
 		Type.is(req.body.age, "Number") && Type.is(req.body.coffee, "Boolean") &&
@@ -79,10 +81,10 @@ app.put('/:submit', (req, res) => {
 		});
 });
 
-app.post('/:help', (req, res) => {
+app.post('/help', (req, res) => {
 	var msg = {
-		title: "Help user " + req.body.pc_id,
-		message: "User on " + req.body.pc_id + " needs help:\n" + req.body.details
+		title: req.body.title,
+		message: req.body.details
 	};
 	var status = 200;
 	pushapidata.devices.forEach((device)=> {
@@ -97,9 +99,65 @@ app.post('/:help', (req, res) => {
 	res.sendStatus(status);
 });
 
+app.post('/pushStatus', (req, res) => {
+	if (!(Type.is(req.body.type, "String") && Type.is(req.body.position, "String"))
+		|| re.test(req.body.type) || re.test(req.body.position)) {
+		console.error("Faulty data!");
+		res.sendStatus(400);
+		return;
+	}
+	switch(req.body.type) {
+		case "begin":
+		usersInProgress[req.body.position] += 1;
+		break;
+		case "end":
+		usersInProgress[req.body.position] -= 1;
+		break;
+		default:
+		console.log("WARNING: Got pushStatus request of invalid type.");
+	}
+	res.sendStatus(200);
+});
+
+app.get('/stats', (req, res) => {
+	var doneSit, doneStand;
+	db.get("SELECT COUNT(SEATED) FROM received WHERE SEATED=1", (err, row) => {
+		doneSit = row["COUNT(SEATED)"];
+		db.get("SELECT COUNT(SEATED) FROM received WHERE SEATED=0", (err, row) => {
+			doneStand = row["COUNT(SEATED)"];
+			res.set('Content-Type', 'text/plain');
+			res.send([
+				"Completed:",
+				"\n      Seated: ",
+				doneSit,
+				"\n      Standing: ",
+				doneStand,
+				"\nIn Progress:",
+				"\n      Seated: ",
+				usersInProgress.sitting,
+				"\n      Standing: ",
+				usersInProgress.standing,
+				"\n-------------------------------------\nTotal:",
+				"\n      Seated: ",
+				usersInProgress.sitting + doneSit,
+				"\n      Standing: ",
+				usersInProgress.standing + doneStand,
+				].join(''));
+		});
+	});
+});
+
+/*
+function _clean() {
+	stmt.finalize();
+}
+process.on('exit', _clean);
+process.on('SIGINT', _clean);
+process.on('uncaughtException', _clean);
+*/
 app.listen(port, (err) => {  
 	if (err)
 		return console.log('something bad happened', err);
 
 	console.log(`server is listening on ${port}`);
-})
+});
