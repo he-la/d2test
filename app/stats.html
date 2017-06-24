@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">
+function addOne(position) {
+	$.ajax({
+		type: "POST",
+		url: "/pushStatus",
+		contentType: "application/json",
+		data: JSON.stringify({"type": "begin", "position": position})
+	}).done(function() {
+		location.reload();
+	});
+}
+
+function kickOne(position) {
+	$.ajax({
+		type: "POST",
+		url: "/pushStatus",
+		contentType: "application/json",
+		data: JSON.stringify({"type": "end", "position": position})
+	}).done(function() {
+		location.reload();
+	});
+}
+</script>
+</head>
+<body>
+	Completed:<br>
+	<span style="margin-left: 30px">Seated: {{comp_seated}}</span><br>
+	<span style="margin-left: 30px">Stood: {{comp_stood}}</span><br>
+	In Progress:<br>
+	<span style="margin-left: 30px">Seated: {{prog_seated}}</span><a style="margin-left: 5px;" href="javascript:addOne('sitting');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('sitting');">Kick</a><br>
+	<span style="margin-left: 30px">Stood: {{prog_stood}}</span><a style="margin-left: 5px;" href="javascript:addOne('standing');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('standing');">Kick</a><br>
+	-------------------------<br>
+	Total:<br>
+	<span style="margin-left: 30px">Seated: {{tot_seated}}</span><br>
+	<span style="margin-left: 30px">Stood: {{tot_stood}}</span><br>
+	<span style="margin-left: 30px">Total: {{tot_tot}}</span><br>
+</body>
+</html>
