@@ -70,7 +70,7 @@ canvas {
 	text-align: center;
 }
 
-#timerbar {
+.timerbar {
 	margin: 0;
 	padding: 0;
 	position: fixed;

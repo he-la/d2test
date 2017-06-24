@@ -10,6 +10,7 @@ const sqlite3 = require('sqlite3');
 const Type = require('type-of-is');
 const fs = require("fs");
 const PushBullet = require('pushbullet');
+const Handlebars = require("handlebars");
 const port = 33333;
 
 var db = new sqlite3.Database(__dirname + '/data.db');
@@ -28,8 +29,10 @@ db.serialize(() => {
 	stmt = db.prepare('INSERT INTO received VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
 });
 
-var usersInProgress = {"sitting": 0, "standing": 0};
-const re = /\(|\)|;|'|_|%|[A-Z]/g; // sqlite sanitize regex
+var usersInProgress = {"sitting": 0, "standing": 0, "ids": {}};
+const statsTemplate = Handlebars.compile(fs.readFileSync('./app/stats.html').toString());
+
+const re = /\(|\)|;|'|_|%/g; // sqlite sanitize regex
 
 var pushapidata = JSON.parse(fs.readFileSync('./app/pushbullet.json'), 'utf8');
 /*
@@ -103,20 +106,20 @@ app.post('/pushStatus', (req, res) => {
 	if (!(Type.is(req.body.type, "String") && Type.is(req.body.position, "String"))
 		|| re.test(req.body.type) || re.test(req.body.position)) {
 		console.error("Faulty data!");
-		res.sendStatus(400);
-		return;
-	}
-	switch(req.body.type) {
-		case "begin":
-		usersInProgress[req.body.position] += 1;
-		break;
-		case "end":
-		usersInProgress[req.body.position] -= 1;
-		break;
-		default:
-		console.log("WARNING: Got pushStatus request of invalid type.");
-	}
-	res.sendStatus(200);
+	res.sendStatus(400);
+	return;
+}
+switch(req.body.type) {
+	case "begin":
+	usersInProgress[req.body.position] += 1;
+	break;
+	case "end":
+	usersInProgress[req.body.position] -= 1;
+	break;
+	default:
+	console.log("WARNING: Got pushStatus request of invalid type.");
+}
+res.sendStatus(200);
 });
 
 app.get('/stats', (req, res) => {
@@ -125,36 +128,36 @@ app.get('/stats', (req, res) => {
 		doneSit = row["COUNT(SEATED)"];
 		db.get("SELECT COUNT(SEATED) FROM received WHERE SEATED=0", (err, row) => {
 			doneStand = row["COUNT(SEATED)"];
-			res.set('Content-Type', 'text/plain');
-			res.send([
-				"Completed:",
-				"\n      Seated: ",
+			data = {"comp_seated": doneSit, "comp_stood": doneStand,
+			"prog_seated": usersInProgress.sitting, "prog_stood": usersInProgress.standing,
+			"tot_seated": usersInProgress.sitting + doneSit, "tot_stood": usersInProgress.standing + doneStand,
+			"tot_tot": usersInProgress.sitting + doneSit +usersInProgress.standing + doneStand};
+
+			res.send(statsTemplate(data));
+			/*res.send([
+				"<!DOCTYPE html><html><body>Completed:",
+				"<br>      Seated: ",
 				doneSit,
-				"\n      Standing: ",
+				"<br>      Standing: ",
 				doneStand,
-				"\nIn Progress:",
-				"\n      Seated: ",
+				"<br>In Progress:",
+				"<br>      Seated: ",
 				usersInProgress.sitting,
-				"\n      Standing: ",
+				"<br>      Standing: ",
 				usersInProgress.standing,
-				"\n-------------------------------------\nTotal:",
-				"\n      Seated: ",
+				"<br>-------------------------------------<br>Total:",
+				"<br>      Seated: ",
 				usersInProgress.sitting + doneSit,
-				"\n      Standing: ",
+				"<br>      Standing: ",
 				usersInProgress.standing + doneStand,
-				].join(''));
+				"<br>      Total: ",
+				usersInProgress.sitting + doneSit +usersInProgress.standing + doneStand,
+				"</body></html>"
+				].join(''));*/
 		});
 	});
 });
 
-/*
-function _clean() {
-	stmt.finalize();
-}
-process.on('exit', _clean);
-process.on('SIGINT', _clean);
-process.on('uncaughtException', _clean);
-*/
 app.listen(port, (err) => {  
 	if (err)
 		return console.log('something bad happened', err);

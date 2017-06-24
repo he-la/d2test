@@ -2,3 +2,4 @@ node_modules/
 npm-debug.log*
 app/data.db
 app/pushbullet.json
+testdata.xlsx

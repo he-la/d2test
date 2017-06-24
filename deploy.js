@@ -127,5 +127,18 @@ function compress() {
 			}
 		});
 	});
+
+	fs.readFile("./temp/log.html", 'utf-8', function(err, content) {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		fs.writeFile("./app/public/log.html", minify(content), (err) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+		});
+	});
 	console.log("Done.");
 }

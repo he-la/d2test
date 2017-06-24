@@ -17,6 +17,7 @@ targets,			// target numbers for series
 row,				// current row values
 correct,			// correct current row values
 consecutives = 0,	// consecutive correct exercises
+hasHadConsecutives = false,// user has had sufficient consecutives
 totals = 0,			// Total practice rounds
 ex_canvas,			// exercise canvas
 ex_ctx,				// exercise context
@@ -24,6 +25,7 @@ test_canvas,		// test canvas
 test_ctx,			// test context
 data = {results: {}},// Holds json to be submitted on complete
 rowtime,			// holds time when current row started.
+_ustartTime,		// holds time when user started reading instructions
 begin = false;		// have we sent a pushBegin?
 
 // For testing; quickly switch to frame
@@ -47,6 +49,14 @@ function switchTo(divId) {
 		$("#uform_form")[0].reset();
 		$("label[for=age]").removeClass("active");
 		pushBegin();
+		break;
+		case "#ustart":
+		_ustartTime = Date.now();
+		if (_POS === "standing")
+			$("#instr--stand").css({"position": "static", "visibility": "visible"});
+		else
+			$("#instr--sit").css({"position": "static", "visibility": "visible"});
+		break;
 		case '#explanation':
 		example();
 		break;
@@ -54,6 +64,7 @@ function switchTo(divId) {
 		exercise();
 		break;
 		case "#test":
+		index = 0;
 		nextSeries();
 		break;
 		case "#thanks":
@@ -83,10 +94,16 @@ function saveSetup(position) {
 	_PC_ID = $("#PC_ID").val();
 	if (_PC_ID.length <= 2) {
 		$("#loadup_checkinput").css("visibility", "visible");
+		_POS = position;
 		return;
 	}
 	$("#loadup_checkinput").css("visibility", "hidden");
 	_POS = position;
+	switchTo('#ustart');
+}
+
+function saveSetupForce() {
+	_PC_ID = "auto-" + _POS;
 	switchTo('#ustart');
 }
 
@@ -220,7 +237,7 @@ function drawRow(ctx, row) {
 		}
 		if (marked) {
 			ctx.moveTo(x - 2.5, 40);
-			ctx.lineTo(x + 16.5, 12)
+			ctx.lineTo(x + 16.5, 12);
 		}
 		x += 26;
 	}
@@ -308,7 +325,7 @@ function nextSeries() {
     }, 1000);
 }
 
-// The actual test; timer. Remember to disable when switching series
+// The actual test timer. Remember to disable when switching series
 // by calling clearTimeout(tickID);
 function testTick() {
 	if (time) {
@@ -382,12 +399,12 @@ function _setup() {
 		}
 		ex_ctx.strokeStyle = '#000000';
 		totals += 1;
-		if (totals >= 4 && broken > 1) {
+		if (totals >= 4 && broken > 1 && Date.now() - _ustartTime > 70000) {
 			// This user needs some help!
 			needHelp("User is having trouble with practice rounds (count: " + totals + ")", false);
 		}
 		if (broken > 1) {
-			consecutives = -1;
+			consecutives =- 1;
 			return true;
 		} else if (broken == 1) {
 			consecutives = 0;
@@ -396,7 +413,11 @@ function _setup() {
 		$('#ex_correct_errors').css("visibility", "hidden");
 		consecutives += 1;
 		if (consecutives >= 2)
+			hasHadConsecutives = true;
+		if (hasHadConsecutives && Date.now() - _ustartTime > 60000) {
 			switchTo("#test");
+			return;
+		}
 		if (index >= 7) {
 			index = 0;
 			targets = generateTargetNumbers();
@@ -531,6 +552,7 @@ function submit(doneThatBefore) {
 		data = {results:{}};
 		time = ${TIME} - 1;
 		consecutives = 0;
+		hasHadConsecutives = false;
 		totals = 0;
 		currentseries = 0;
 		$("#test_splash").html("Es geht los!");

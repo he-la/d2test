@@ -22,7 +22,7 @@
 			<div class="input-field col s6">
 				<input id="PC_ID" type="text" class="validate" required>
 				<label for="PC_ID">PC-ID</label>
-			</div><span id="loadup_checkinput" style="color: #f33; visibility: hidden;">We'll need a meaningful ID here.</span>
+			</div><span id="loadup_checkinput" style="color: #f33; visibility: hidden;">We'll need a meaningful ID here. <a href="javascript:saveSetupForce();">Auto-Set</a></span>
 			<div class="collection">
 				<a href="javascript:saveSetup('standing')" class="collection-item">Standing</a>
 				<a href="javascript:saveSetup('sitting')" class="collection-item">Sitting</a>
@@ -35,15 +35,17 @@
 				Der folgende Test wird nicht lange dauern, aber es ist wichtig dass du ihn dennoch konzentriert ausführst. Lese die Anweisungen sorgfältig.
 				<br><br>
 				<ul class="collection">
-					<li class="collection-item">1. Stelle dir den Computer so ein, wie es für dich bequem ist.</li>
-					<li class="collection-item">2. Wenn du am Computer normalerweise eine Brille trägst, setze sie bitte auf. Falls du sie nicht dabei hast, melde dich bei mir. Ansonsten kann es los gehen!</li>
+					<li class="collection-item" id="instr--stand" style="visibility: hidden; position: fixed;">1. Stelle dich vor den Computer so dass du die Maus normal halten kannst. Wenn dir der Tisch zu hoch oder zu niedrig ist, melde dich bei mir. Du machst jetzt die Erfahrung eines &bdquo;standing desks&ldquo;!</li>
+					<li class="collection-item" id="instr--sit" style="visibility: hidden; position: fixed;">1. Setze dich normal vor den Computer.</li>
+					<li class="collection-item">2. Stelle dir den Computer so ein, wie es für dich bequem ist.</li>
+					<li class="collection-item">3. Wenn du am Computer normalerweise eine Brille trägst, setze sie bitte auf. Falls du sie nicht dabei hast, melde dich bei mir. Ansonsten kann es los gehen!</li>
 				</ul>
 			</div>
 			<a class="waves-effect waves-light btn floatbr" href="javascript:switchTo('#uform')">Auf geht's!</a>
 		</div>
 
 		<div class="content" id="uform">
-			Bevor es los geht brauche ich noch ein paar Angaben von Dir (ansonsten ist der Test übrigens völlig anonym):<br>
+			Bevor es los geht brauche ich noch ein paar Angaben von dir (ansonsten ist der Test übrigens völlig anonym):<br>
 			<div style="margin: 15px 20px;">
 				<form id="uform_form">
 					<div class="row" style="position: relative; top: 10px;">
@@ -116,7 +118,7 @@
 					</ul>
 					hat. Alle anderen Zeichen darfst du nicht durchstreichen. Für jeweils 7 Reihen hast du ${TIME} Sekunden Zeit - Beeile dich!
 				</div>
-				<div id="timerbar" class="progress">
+				<div id="timerbar" class="progress timerbar">
 					<div class="determinate" id="test_determinate"></div>
 				</div>
 				<div id="rowprogress">Reihe 1/7</div>
