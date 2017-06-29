@@ -159,7 +159,6 @@ app.get('/stats', (req, res) => {
 	db.serialize(() => {
 		db.all("SELECT TN,E_100,FL,CP FROM processed WHERE SEATED=1", (err,rows) => {
 			rows.forEach((row) => {
-				console.log(row);
 				sit.tn += parseInt(row["TN"]);
 				sit.e100 += parseInt(row["E_100"]);
 				sit.fl += parseInt(row["FL"]);
