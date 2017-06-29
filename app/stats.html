@@ -3,6 +3,7 @@
 <head>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script type="text/javascript">
+var re = /-?[0-9]+/g;
 function addOne(position) {
 	$.ajax({
 		type: "POST",
@@ -10,7 +11,12 @@ function addOne(position) {
 		contentType: "application/json",
 		data: JSON.stringify({"type": "begin", "position": position})
 	}).done(function() {
-		location.reload();
+		var ele = $("#prog--" + position);
+		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
+		ele = $("#tot--" + position);
+		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
+		ele = $("#tot--tot");
+		ele.html("Total: " + (parseInt(ele.html().match(re)[0]) + 1).toString());
 	});
 }
 
@@ -21,22 +27,40 @@ function kickOne(position) {
 		contentType: "application/json",
 		data: JSON.stringify({"type": "end", "position": position})
 	}).done(function() {
-		location.reload();
+		var ele = $("#prog--" + position);
+		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
+		ele = $("#tot--" + position);
+		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
+		ele = $("#tot--tot");
+		ele.html("Total: " + (parseInt(ele.html().match(re)[0]) - 1).toString());
 	});
 }
 </script>
 </head>
 <body>
 	Completed:<br>
-	<span style="margin-left: 30px">Seated: {{comp_seated}}</span><br>
-	<span style="margin-left: 30px">Stood: {{comp_stood}}</span><br>
+	<span style="margin-left: 30px">sitting: {{comp_seated}}</span><br>
+	<span style="margin-left: 30px">standing: {{comp_stood}}</span><br>
 	In Progress:<br>
-	<span style="margin-left: 30px">Seated: {{prog_seated}}</span><a style="margin-left: 5px;" href="javascript:addOne('sitting');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('sitting');">Kick</a><br>
-	<span style="margin-left: 30px">Stood: {{prog_stood}}</span><a style="margin-left: 5px;" href="javascript:addOne('standing');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('standing');">Kick</a><br>
+	<span style="margin-left: 30px" id="prog--sitting">sitting: {{prog_seated}}</span><a style="margin-left: 5px;" href="javascript:addOne('sitting');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('sitting');">Kick</a><br>
+	<span style="margin-left: 30px" id="prog--standing">standing: {{prog_stood}}</span><a style="margin-left: 5px;" href="javascript:addOne('standing');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('standing');">Kick</a><br>
 	-------------------------<br>
 	Total:<br>
-	<span style="margin-left: 30px">Seated: {{tot_seated}}</span><br>
-	<span style="margin-left: 30px">Stood: {{tot_stood}}</span><br>
-	<span style="margin-left: 30px">Total: {{tot_tot}}</span><br>
+	<span style="margin-left: 30px" id="tot--sitting">sitting: {{tot_seated}}</span><br>
+	<span style="margin-left: 30px" id="tot--standing">standing: {{tot_stood}}</span><br>
+	<span style="margin-left: 30px" id="tot--tot">Total: {{tot_tot}}</span><br>
+	-------------------------<br>
+	Quick Summary:<br>
+	<span style="margin-left: 15px">sitting:</span><br>
+	<span style="margin-left: 40px">TN: {{sit_tn}}</span><br>
+	<span style="margin-left: 40px">E%: {{sit_e100}}</span><br>
+	<span style="margin-left: 40px">FL: {{sit_fl}}</span><br>
+	<span style="margin-left: 40px">CP: {{sit_cp}}</span><br>
+
+	<span style="margin-left: 15px">standing:</span><br>
+	<span style="margin-left: 40px">TN: {{std_tn}}</span><br>
+	<span style="margin-left: 40px">E%: {{std_e100}}</span><br>
+	<span style="margin-left: 40px">FL: {{std_fl}}</span><br>
+	<span style="margin-left: 40px">CP: {{std_cp}}</span><br>
 </body>
 </html>
