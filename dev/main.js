@@ -597,6 +597,15 @@ function pushBegin() {
 }
 
 function pushQuit() {
+	$.ajax({
+		type: "POST",
+		url: "/pushStatus",
+		contentType: "application/json",
+		data: JSON.stringify({"type": "end", "position": _POS})
+	});
+}
+
+function leavesPage() {
 	needHelp("User is trying to leave page.", false, "User " + _PC_ID + " leaves page!");
 	var msg = "Bitte nicht... sonst werde ich böse!";
 	if (!begin)
@@ -611,5 +620,5 @@ function pushQuit() {
 	return msg;
 }
 
-window.onbeforeunload = pushQuit; // page refresh etc
-$(window).unload(pushQuit); // tab/browser quit (doesn't always work...)
+window.onbeforeunload = leavesPage; // page refresh etc
+$(window).unload(leavesPage); // tab/browser quit (doesn't always work...)
