@@ -3,3 +3,4 @@ npm-debug.log*
 app/data.db
 app/pushbullet.json
 testdata.xlsx
+app/treatments.json

@@ -11,46 +11,51 @@ const Type = require('type-of-is');
 const fs = require("fs");
 const PushBullet = require('pushbullet');
 const Handlebars = require("handlebars");
-const port = 33333;
+var port = 33333;
+
+if (process.argv[2] != undefined) port = parseInt(process.argv[2])
 
 var db = new sqlite3.Database(__dirname + '/data.db');
 var stmt;
 var stmt_proc;
 db.serialize(() => {
 	db.run(["CREATE TABLE IF NOT EXISTS received (",
-		"DATE TEXT NOT NULL,",//UTC
-		"PC_ID TEXT NOT NULL,",
-		"MALE BOOLEAN NOT NULL,",
-		"AGE INTEGER NOT NULL,",
-		"COFFEE BOOLEAN NOT NULL,",
-		"SUGAR BOOLEAN NOT NULL,",
-		"EXPERIENCED BOOLEAN NOT NULL,",
-		"SEATED BOOLEAN NOT NULL,",
-		"RESULTS TEXT NOT NULL)"].join('')); // hacky multiline string to avoid whitespace issue with backslashes
+		"date TEXT NOT NULL,",//UTC
+		"pc_id TEXT NOT NULL,",
+		"male BOOLEAN NOT NULL,",
+		"age INTEGER NOT NULL,",
+		"coffee BOOLEAN NOT NULL,",
+		"sugar BOOLEAN NOT NULL,",
+		"experienced BOOLEAN NOT NULL,",
+		"treatment TEXT NOT NULL,",
+		"results TEXT NOT NULL)"].join('')); // hacky multiline string to avoid whitespace issue with backslashes
 	stmt = db.prepare('INSERT INTO received VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
 	db.run(["CREATE TABLE IF NOT EXISTS processed (",
-		"DATE TEXT NOT NULL,",//UTC
-		"PC_ID TEXT NOT NULL,",
-		"MALE BOOLEAN NOT NULL,",
-		"AGE INTEGER NOT NULL,",
-		"COFFEE BOOLEAN NOT NULL,",
-		"SUGAR BOOLEAN NOT NULL,",
-		"EXPERIENCED BOOLEAN NOT NULL,",
-		"SEATED BOOLEAN NOT NULL,",
-		"TN INTEGER NOT NULL,",
-		"FL INTEGER NOT NULL,",
-		"E1 INTEGER NOT NULL,",
-		"E2l INTEGER NOT NULL,",
-		"E2d INTEGER NOT NULL,",
-		"E INTEGER NOT NULL,",
-		"E_100 INTEGER NOT NULL,",
-		"TN_E INTEGER NOT NULL,",
-		"CP INTEGER NOT NULL,",
-		"TIMING TEXT NOT NULL)"].join('')); // hacky multiline string to avoid whitespace issue with backslashes
+		"date TEXT NOT NULL,",//UTC
+		"pc_id TEXT NOT NULL,",
+		"male BOOLEAN NOT NULL,",
+		"age INTEGER NOT NULL,",
+		"coffee BOOLEAN NOT NULL,",
+		"sugar BOOLEAN NOT NULL,",
+		"experienced BOOLEAN NOT NULL,",
+		"treatment TEXT NOT NULL,",
+		"tn INTEGER NOT NULL,",
+		"fl INTEGER NOT NULL,",
+		"e1 INTEGER NOT NULL,",
+		"e2l INTEGER NOT NULL,",
+		"e2d INTEGER NOT NULL,",
+		"e INTEGER NOT NULL,",
+		"e_100 INTEGER NOT NULL,",
+		"tn_e INTEGER NOT NULL,",
+		"cp INTEGER NOT NULL,",
+		"timing TEXT NOT NULL)"].join('')); // hacky multiline string to avoid whitespace issue with backslashes
 	stmt_proc = db.prepare('INSERT INTO processed VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 });
 
-var usersInProgress = {"sitting": 0, "standing": 0, "ids": {}};
+var usersInProgress = {};
+var _treatmentGroups = eval(fs.readFileSync('./app/treatments.json').toString())
+for (var i=0; i<_treatmentGroups.length; i++) usersInProgress[_treatmentGroups[i]] = 0
+
 const statsTemplate = Handlebars.compile(fs.readFileSync('./app/stats.html').toString());
 
 const re = /\(|\)|;|'|_|%/g; // sqlite sanitize regex
@@ -85,9 +90,9 @@ app.put('/submit', (req, res) => {
 	if (!(Type.is(req.body.pc_id, "String") && Type.is(req.body.sex, "Boolean") &&
 		Type.is(req.body.age, "Number") && Type.is(req.body.coffee, "Boolean") &&
 		Type.is(req.body.sugar, "Boolean") && Type.is(req.body.doneThatBefore, "Boolean")
-		&& Type.is(req.body.position, "String") && Type.is(req.body.results, "Object") &&
+		&& Type.is(req.body.treatment, "String") && Type.is(req.body.results, "Object") &&
 		Type.is(strRestult, "String")) ||
-		re.test(req.body.position) || re.test(strRestult) || re.test(req.body.pc_id))
+		re.test(req.body.treatment) || re.test(strRestult) || re.test(req.body.pc_id))
 	{		
 		console.error("Faulty data!");
 		console.log(JSON.stringify(req.body));
@@ -96,7 +101,7 @@ app.put('/submit', (req, res) => {
 	}
 	var date = new Date().toISOString();
 	stmt.run(date, req.body.pc_id, req.body.sex, req.body.age, req.body.coffee, req.body.sugar,
-		req.body.doneThatBefore, req.body.position == "sitting", strRestult, (err) => {
+		req.body.doneThatBefore, req.body.treatment, strRestult, (err) => {
 			if (err) {
 				console.error("Error during sqlite write:\n" + err.message);
 				res.sendStatus(500);
@@ -106,7 +111,7 @@ app.put('/submit', (req, res) => {
 		});
 	processed = processData(req.body.results);
 	stmt_proc.run(date, req.body.pc_id, req.body.sex, req.body.age, req.body.coffee, req.body.sugar,
-		req.body.doneThatBefore, req.body.position == "sitting", processed[0], processed[1],
+		req.body.doneThatBefore, req.body.treatment, processed[0], processed[1],
 		processed[2], processed[3], processed[4], processed[5], processed[6], processed[7],
 		processed[8], JSON.stringify(processed[9]), (err) => {
 			if (err) {
@@ -135,86 +140,84 @@ app.post('/help', (req, res) => {
 });
 
 app.post('/pushStatus', (req, res) => {
-	if (!(Type.is(req.body.type, "String") && Type.is(req.body.position, "String"))
-		|| re.test(req.body.type) || re.test(req.body.position)) {
+	if (!(Type.is(req.body.type, "String") && Type.is(req.body.treatment, "String"))
+		|| re.test(req.body.type) || re.test(req.body.treatment)) {
 		console.error("Faulty data!");
-	res.sendStatus(400);
-	return;
-}
-switch(req.body.type) {
-	case "begin":
-	usersInProgress[req.body.position] += 1;
-	break;
-	case "end":
-	usersInProgress[req.body.position] -= 1;
-	break;
-	default:
-	console.log("WARNING: Got pushStatus request of invalid type.");
-}
-res.sendStatus(200);
+		console.log(JSON.stringify(req.body));
+		res.sendStatus(400);
+		return;
+	}
+	switch(req.body.type) {
+		case "begin":
+			usersInProgress[req.body.treatment] += 1;
+			break;
+		case "end":
+			usersInProgress[req.body.treatment] -= 1;
+			break;
+		default:
+			console.log("WARNING: Got pushStatus request of invalid type.");
+	}
+	res.sendStatus(200);
 });
+
+function do_stats(values, totals, _tot_, index, callback) {
+	var treatment = _treatmentGroups[index]
+	db.all("SELECT tn, e_100, fl, cp FROM processed WHERE treatment=?", treatment, (err, rows) => {
+		var _vals = {tn: 0, e100: 0, fl: 0, cp: 0}
+		if (err) return console.error("Error reading for group", treatment, err)
+		for (var j = 0; j < rows.length; j++) {
+			row = rows[j]
+			_vals.tn += parseInt(row["tn"]);
+			_vals.e100 += parseInt(row["e_100"]);
+			_vals.fl += parseInt(row["fl"]);
+			_vals.cp += parseInt(row["cp"]);
+		}
+		for (prop in _vals) _vals[prop] = _vals[prop] / rows.length // praise the lord for auto null division handling
+		values[treatment] = _vals
+		values[treatment].count = rows.length
+		totals[treatment] = rows.length + usersInProgress[treatment]
+		_tot_ += totals[treatment]
+
+		if (index + 1>= _treatmentGroups.length) callback({"completed": values, "progress": usersInProgress, "total": totals, "_tot_": _tot_})
+		else do_stats(values, totals, _tot_, index+1, callback)
+	})
+}
 
 app.get('/stats', (req, res) => {
-	var doneSit, doneStand, sit = {tn: 0, e100: 0, fl: 0, cp: 0}, stand = {tn: 0, e100: 0, fl: 0, cp: 0};
+	var values = {}, totals = {}, _tot_ = 0
 	db.serialize(() => {
-		db.all("SELECT TN,E_100,FL,CP FROM processed WHERE SEATED=1", (err,rows) => {
-			rows.forEach((row) => {
-				sit.tn += parseInt(row["TN"]);
-				sit.e100 += parseInt(row["E_100"]);
-				sit.fl += parseInt(row["FL"]);
-				sit.cp += parseInt(row["CP"]);
-			});
-			for (prop in sit) {
-				sit[prop] = sit[prop] / rows.length;
-			}
-		}).all("SELECT TN,E_100,FL,CP FROM processed WHERE SEATED=0", (err,rows) => {
-			rows.forEach((row) => {
-				stand.tn += parseInt(row["TN"]);
-				stand.e100 += parseInt(row["E_100"]);
-				stand.fl += parseInt(row["FL"]);
-				stand.cp += parseInt(row["CP"]);
-			});
-			for (prop in stand) {
-				stand[prop] = stand[prop] / rows.length;
-			}
-		}).get("SELECT COUNT(SEATED) FROM received WHERE SEATED=1", (err, row) => {
-			doneSit = row["COUNT(SEATED)"];
-		}).get("SELECT COUNT(SEATED) FROM received WHERE SEATED=0", (err, row) => {
-				doneStand = row["COUNT(SEATED)"];
-				data = {"comp_seated": doneSit, "comp_stood": doneStand,
-				"prog_seated": usersInProgress.sitting, "prog_stood": usersInProgress.standing,
-				"tot_seated": usersInProgress.sitting + doneSit, "tot_stood": usersInProgress.standing + doneStand,
-				"tot_tot": usersInProgress.sitting + doneSit +usersInProgress.standing + doneStand, 
-				"sit_tn": sit.tn, "sit_e100": sit.e100, "sit_fl": sit.fl, "sit_cp": sit.cp,
-				"std_tn": stand.tn, "std_e100": stand.e100, "std_fl": stand.fl, "std_cp": stand.cp,
-			};
-
-				res.send(statsTemplate(data));
-		});
-	});
-});
+		do_stats({}, {}, 0, 0, (data) => { // dirty hack to wait for above to execute
+			console.log(JSON.stringify(data))
+			res.send(statsTemplate(data))
+		})
+	})
+})
 
 app.listen(port, (err) => {  
 	if (err)
 		return console.log('something bad happened', err);
 
-	console.log(`server is listening on ${port}`);
+	console.log(`server is listening on port ${port}`);
+	require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+		console.log('Your local IP address is', add + ".")
+		console.log("To access your server, type http://" + add + ((port != 80) ? (":" + port) : ""), "in a web broser")
+	})
 });
 
 function processData(data) {
 	var series;
 	var tn = 0,
-	fl = 0,
-	e1 = 0,
-	e2l = 0,
-	e2d = 0,
-	e = 0,
-	e_100 = 0,
-	tn_e = 0,
-	cp = 0,
-	lastTime = 0,
-	timing = {},
-	count = 0;
+		fl = 0,
+		e1 = 0,
+		e2l = 0,
+		e2d = 0,
+		e = 0,
+		e_100 = 0,
+		tn_e = 0,
+		cp = 0,
+		lastTime = 0,
+		timing = {},
+		count = 0;
 	var lastSeries = false, lastSequence = false;
 	for (var i=1; !lastSeries; i++) {
 		var ser = data[i];
