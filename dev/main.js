@@ -6,7 +6,7 @@ If you find some parts are too cryptic or hacky, feel free
 to fix it and make a pull request.
 */
 // Global variables
-var _POS = '',		// sitting / standing
+var _GRP = '',		// treatment group
 _PC_ID = '',			// computer identifier
 time = ${TIME} - 1,	// series time left
 currentseries = 0,	// current series index
@@ -51,11 +51,7 @@ function switchTo(divId) {
 		pushBegin();
 		break;
 		case "#ustart":
-		_ustartTime = Date.now();
-		if (_POS === "standing")
-			$("#instr--stand").css({"position": "static", "visibility": "visible"});
-		else
-			$("#instr--sit").css({"position": "static", "visibility": "visible"});
+		_ustartTime = Date.now();;
 		break;
 		case '#explanation':
 		example();
@@ -83,27 +79,27 @@ function switchTo(divId) {
     //Sets warning notification when not configured properly
     //NOTE: Consider activating on release
     /*
-    if (_POS == '') {
+    if (_GRP == '') {
     	$('#notifier').css("visibility", "visible");
     	$('#container').css("display", "none");
     }*/
 }
 
 // Called by #loadup
-function saveSetup(position) {
+function saveSetup(treatment) {
 	_PC_ID = $("#PC_ID").val();
 	if (_PC_ID.length <= 2) {
 		$("#loadup_checkinput").css("visibility", "visible");
-		_POS = position;
+		_GRP = treatment;
 		return;
 	}
 	$("#loadup_checkinput").css("visibility", "hidden");
-	_POS = position;
+	_GRP = treatment;
 	switchTo('#ustart');
 }
 
 function saveSetupForce() {
-	_PC_ID = "auto-" + _POS;
+	_PC_ID = "auto-" + _GRP;
 	switchTo('#ustart');
 }
 
@@ -539,7 +535,7 @@ function evaluateRow() {
 function submit(doneThatBefore) {
 	$('html,body').css('cursor','wait');
 	pushQuit();
-	data.position = _POS;
+	data.treatment = _GRP;
 	data.pc_id = _PC_ID;
 	data.doneThatBefore = doneThatBefore;
 	var _data = JSON.stringify(data);
@@ -592,7 +588,7 @@ function pushBegin() {
 		type: "POST",
 		url: "/pushStatus",
 		contentType: "application/json",
-		data: JSON.stringify({"type": "begin", "position": _POS})
+		data: JSON.stringify({"type": "begin", "treatment": _GRP})
 	})
 }
 
@@ -601,7 +597,7 @@ function pushQuit() {
 		type: "POST",
 		url: "/pushStatus",
 		contentType: "application/json",
-		data: JSON.stringify({"type": "end", "position": _POS})
+		data: JSON.stringify({"type": "end", "treatment": _GRP})
 	});
 }
 
@@ -615,7 +611,7 @@ function leavesPage() {
 		type: "POST",
 		url: "/pushStatus",
 		contentType: "application/json",
-		data: JSON.stringify({"type": "end", "position": _POS})
+		data: JSON.stringify({"type": "end", "treatment": _GRP})
 	});
 	return msg;
 }

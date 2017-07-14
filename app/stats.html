@@ -4,63 +4,62 @@
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script type="text/javascript">
 var re = /-?[0-9]+/g;
-function addOne(position) {
+function addOne(treatment) {
 	$.ajax({
 		type: "POST",
 		url: "/pushStatus",
 		contentType: "application/json",
-		data: JSON.stringify({"type": "begin", "position": position})
+		data: JSON.stringify({"type": "begin", "treatment": treatment})
 	}).done(function() {
-		var ele = $("#prog--" + position);
-		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
-		ele = $("#tot--" + position);
-		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
+		var ele = $("#prog--" + treatment);
+		ele.html(treatment + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
+		ele = $("#tot--" + treatment);
+		ele.html(treatment + ": " + (parseInt(ele.html().match(re)[0]) + 1).toString());
 		ele = $("#tot--tot");
-		ele.html("Total: " + (parseInt(ele.html().match(re)[0]) + 1).toString());
+		ele.html("<b>Total: " + (parseInt(ele.html().match(re)[0]) + 1).toString() + "</b>");
 	});
 }
 
-function kickOne(position) {
+function kickOne(treatment) {
 	$.ajax({
 		type: "POST",
 		url: "/pushStatus",
 		contentType: "application/json",
-		data: JSON.stringify({"type": "end", "position": position})
+		data: JSON.stringify({"type": "end", "treatment": treatment})
 	}).done(function() {
-		var ele = $("#prog--" + position);
-		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
-		ele = $("#tot--" + position);
-		ele.html(position + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
+		var ele = $("#prog--" + treatment);
+		ele.html(treatment + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
+		ele = $("#tot--" + treatment);
+		ele.html(treatment + ": " + (parseInt(ele.html().match(re)[0]) - 1).toString());
 		ele = $("#tot--tot");
-		ele.html("Total: " + (parseInt(ele.html().match(re)[0]) - 1).toString());
+		ele.html("<b>Total: " + (parseInt(ele.html().match(re)[0]) - 1).toString()+"</b>");
 	});
 }
 </script>
 </head>
 <body>
 	Completed:<br>
-	<span style="margin-left: 30px">sitting: {{comp_seated}}</span><br>
-	<span style="margin-left: 30px">standing: {{comp_stood}}</span><br>
+	{{#each completed}}
+		<span style="margin-left: 30px">{{@key}}: {{this.count}}</span><br>
+	{{/each}}
 	In Progress:<br>
-	<span style="margin-left: 30px" id="prog--sitting">sitting: {{prog_seated}}</span><a style="margin-left: 5px;" href="javascript:addOne('sitting');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('sitting');">Kick</a><br>
-	<span style="margin-left: 30px" id="prog--standing">standing: {{prog_stood}}</span><a style="margin-left: 5px;" href="javascript:addOne('standing');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('standing');">Kick</a><br>
+	{{#each progress}}
+	<span style="margin-left: 30px" id="prog--{{@key}}">{{@key}}: {{this}}</span><a style="margin-left: 5px;" href="javascript:addOne('{{@key}}');">Add</a> <a style="margin-left: 5px;" href="javascript:kickOne('{{@key}}');">Kick</a><br>
+	{{/each}}
 	-------------------------<br>
 	Total:<br>
-	<span style="margin-left: 30px" id="tot--sitting">sitting: {{tot_seated}}</span><br>
-	<span style="margin-left: 30px" id="tot--standing">standing: {{tot_stood}}</span><br>
-	<span style="margin-left: 30px" id="tot--tot">Total: {{tot_tot}}</span><br>
+	{{#each total}}
+	<span style="margin-left: 30px" id="tot--{{@key}}">{{@key}}: {{this}}</span><br>
+	{{/each}}
+	<span style="margin-left: 30px" id="tot--tot"><b>Total: {{_tot_}}</b></span><br>
 	-------------------------<br>
 	Quick Summary:<br>
-	<span style="margin-left: 15px">sitting:</span><br>
-	<span style="margin-left: 40px">TN: {{sit_tn}}</span><br>
-	<span style="margin-left: 40px">E%: {{sit_e100}}</span><br>
-	<span style="margin-left: 40px">FL: {{sit_fl}}</span><br>
-	<span style="margin-left: 40px">CP: {{sit_cp}}</span><br>
-
-	<span style="margin-left: 15px">standing:</span><br>
-	<span style="margin-left: 40px">TN: {{std_tn}}</span><br>
-	<span style="margin-left: 40px">E%: {{std_e100}}</span><br>
-	<span style="margin-left: 40px">FL: {{std_fl}}</span><br>
-	<span style="margin-left: 40px">CP: {{std_cp}}</span><br>
+	{{#each completed}}
+	<span style="margin-left: 15px">{{@key}}:</span><br>
+	<span style="margin-left: 40px">TN: {{this.tn}}</span><br>
+	<span style="margin-left: 40px">E%: {{this.e100}}</span><br>
+	<span style="margin-left: 40px">FL: {{this.fl}}</span><br>
+	<span style="margin-left: 40px">CP: {{this.cp}}</span><br>
+	{{/each}}
 </body>
 </html>
